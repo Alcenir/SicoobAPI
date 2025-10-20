@@ -214,6 +214,70 @@ public sealed class SicoobCobrancaV3 : Shared.Sicoob
         return lst.ToArray();
     }
 
+    /* Webhook */
+
+    /// <summary>
+    /// Consultar os webhooks cadastrados.
+    /// Serviço para consultar os detalhes dos webhooks cadastrados.
+    /// </summary>
+    /// <param name="idWebhook">Identificador único do webhook.</param>
+    /// <param name="codigoTipoMovimento">Código do tipo de movimento do webhook. 7 - Pagamento (Baixa operacional)</param>
+    /// <returns>Boleto buscado</returns>
+    public async Task<ConsultaWebhookResponse[]> ConsultarWebhooks(long? idWebhook = null, int? codigoTipoMovimento = null)
+    {
+        var consulta = new ConsultaWebhookRequest()
+        {
+            idWebhook = idWebhook,
+            codigoTipoMovimento = codigoTipoMovimento
+        };
+        return await ExecutaChamadaAsync(() => clientApi.GetAsync<ConsultaWebhookResponse[]>(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks", consulta));
+    }
+
+    /// <summary>
+    /// Cadastrar um webhook para receber notificações de acordo com o tipo de movimento.
+    /// Este serviço permite cadastrar uma URL que será notificada sempre que ocorrer um evento associado a um tipo de movimento. O webhook pode ser configurado para o período de movimentação atual (D0).
+    /// </summary>
+    /// <param name="webhook">Dados para inclusão do webhook.</param>
+    /// <returns></returns>
+    public async Task<IncluirWebhooksResponse?> IncluirWebhook(IncluirWebhookRequest webhook)
+    {
+        return await ExecutaChamadaAsync(() => clientApi.PostAsync<IncluirWebhooksResponse?>(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks", webhook));
+    }
+
+    /// <summary>
+    /// Atualizar um webhook cadastrado.
+    /// Serviço de atualização de webhook. Ao modificar a URL, a situação do webhook será automaticamente alterada para '1 - Aguardando validação' e permanecerá assim até que a nova URL seja validada com sucesso.
+    /// </summary>
+    /// <param name="idWebhook">Identificador único do webhook.</param> 
+    /// <param name="webhook">Dados para alteração do webhook.</param>
+    /// <returns></returns>     
+    public async Task AlterarWebhook(long idWebhook, AlterarWebhookRequest webhook)
+    {
+        await ExecutaChamadaAsync(() => clientApi.PatchAsync(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks/" + idWebhook, webhook));
+    }
+
+    /// <summary>
+    /// Excluir um webhook.
+    /// Serviço responsável por remover permanentemente um webhook registrado, encerrando o envio de notificações para a URL vinculada."
+    /// </summary>
+    /// <param name="idWebhook">Identificador único do webhook.</param>
+    /// <returns></returns>
+    public async Task ExcluirWebhook(long idWebhook)
+    {
+        await ExecutaChamadaAsync(() => clientApi.DeleteAsync(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks/" + idWebhook));
+    }
+
+    /// <summary>
+    /// Reativar um webhook inativo.
+    /// Serviço de reativação de webhook desativado, restabelecendo o recebimento de notificações. A situação do webhook será atualizada para '1 - Aguardando validação' e permanecerá assim até que a URL seja validada com sucesso.
+    /// </summary>
+    /// <param name="idWebhook">Identificador único do webhook.</param>     
+    /// <returns></returns>
+    public async Task ReativarWebhook(long idWebhook)
+    {
+        await ExecutaChamadaAsync(() => clientApi.PatchAsync(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks/" + idWebhook + "/reativar", null));
+    }
+
     private void SalvarCopiaMovimentacao(byte[] bytesZip, string nomeArquivo)
     {
         if (PastaCopiaMovimentacoes == null) return;
