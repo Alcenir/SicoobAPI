@@ -200,6 +200,31 @@ public class AuthorizationScope
     /// </summary>
     public bool COBRANCA_BOLETOS_FAIXA_NN_DISPONIVEIS { get; set; }
 
+    /* API Cobrança Bancária (v3) */
+    /// <summary>
+    /// [API Cobrança Bancária V3] boletos_consulta: Permissão de consulta de boletos
+    /// </summary>
+    public bool COBRANCA_V3_BOLETOS_CONSULTA { get; set; }
+    /// <summary>
+    /// [API Cobrança Bancária V3] boletos_inclusao: Permissão de inclusão de boletos
+    /// </summary>
+    public bool COBRANCA_V3_BOLETOS_INCLUSAO { get; set; }
+    /// <summary>
+    /// [API Cobrança Bancária V3] boletos_alteracao: Permissão de alteração de boletos
+    /// </summary>
+    public bool COBRANCA_V3_BOLETOS_ALTERACAO { get; set; }
+    /// <summary>
+    /// [API Cobrança Bancária V3] webhooks_consulta: Permissão de consulta de webhooks
+    /// </summary>
+    public bool COBRANCA_V3_WEBHOOKS_CONSULTA { get; set; }
+    /// <summary>
+    /// [API Cobrança Bancária V3] boletos_inclusao: Permissão de inclusão de webhooks
+    /// </summary>
+    public bool COBRANCA_V3_WEBHOOKS_INCLUSAO { get; set; }
+    /// <summary>
+    /// [API Cobrança Bancária V3] webhooks_alteracao: Permissão de alteração de webhooks
+    /// </summary>
+    public bool COBRANCA_V3_WEBHOOKS_ALTERACAO { get; set; }
 
     /// <summary>
     /// Gera a lista de Scope utilizado na geração do Token
@@ -265,6 +290,14 @@ public class AuthorizationScope
         if (COBRANCA_BOLETOS_ENCARGOS_JUROS_MORA) lst.Add("cobranca_boletos_encargos_juros_mora");
         if (COBRANCA_BOLETOS_PIX) lst.Add("cobranca_boletos_pix");
         if (COBRANCA_BOLETOS_FAIXA_NN_DISPONIVEIS) lst.Add("cobranca_boletos_faixa_nn_disponiveis");
+
+        /* API Cobrança V3*/
+        if (COBRANCA_V3_BOLETOS_CONSULTA) lst.Add("boletos_consulta");
+        if (COBRANCA_V3_BOLETOS_INCLUSAO) lst.Add("boletos_inclusao");
+        if (COBRANCA_V3_BOLETOS_ALTERACAO) lst.Add("boletos_alteracao");
+        if (COBRANCA_V3_WEBHOOKS_CONSULTA) lst.Add("webhooks_consulta");
+        if (COBRANCA_V3_WEBHOOKS_INCLUSAO) lst.Add("webhooks_inclusao");
+        if (COBRANCA_V3_WEBHOOKS_ALTERACAO) lst.Add("webhooks_alteracao");
 
         return lst.ToArray();
     }
@@ -383,6 +416,17 @@ public class AuthorizationScope
         return this;
     }
 
+    public AuthorizationScope CobrancaV3_Setar(bool value)
+    {
+        COBRANCA_V3_BOLETOS_CONSULTA = value;
+        COBRANCA_V3_BOLETOS_INCLUSAO = value;
+        COBRANCA_V3_BOLETOS_ALTERACAO = value;
+        COBRANCA_V3_WEBHOOKS_CONSULTA = value;
+        COBRANCA_V3_WEBHOOKS_INCLUSAO = value;
+        COBRANCA_V3_WEBHOOKS_ALTERACAO = value;
+        return this;
+    }
+
     public AuthorizationScope RemoverTodos()
     {
         return setarTodosComo(false);
@@ -421,8 +465,10 @@ public class AuthorizationScope
     {
         return new AuthorizationScope().CPoupanca_Setar(true);
     }
-    public static AuthorizationScope TodosCobranca()
+    public static AuthorizationScope TodosCobranca(bool v3 = false)
     {
+        if(v3)
+            return new AuthorizationScope().CobrancaV3_Setar(true);
         return new AuthorizationScope().Cobranca_Setar(true);
     }
 }
