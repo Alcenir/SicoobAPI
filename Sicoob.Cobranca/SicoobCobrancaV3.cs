@@ -222,25 +222,34 @@ public sealed class SicoobCobrancaV3 : Shared.Sicoob
     /// </summary>
     /// <param name="idWebhook">Identificador único do webhook.</param>
     /// <param name="codigoTipoMovimento">Código do tipo de movimento do webhook. 7 - Pagamento (Baixa operacional)</param>
-    /// <returns>Boleto buscado</returns>
-    public async Task<ConsultaWebhookResponse[]> ConsultarWebhooks(long? idWebhook = null, int? codigoTipoMovimento = null)
+    /// <returns>Webhooks cadastradros.</returns>
+    public async Task<ConsultaWebhookResponse> ConsultarWebHooksAsync(long? idWebhook = null, int? codigoTipoMovimento = null)
     {
         var consulta = new ConsultaWebhookRequest()
         {
             idWebhook = idWebhook,
             codigoTipoMovimento = codigoTipoMovimento
         };
-        return await ExecutaChamadaAsync(() => clientApi.GetAsync<ConsultaWebhookResponse[]>(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks", consulta));
+        return await ExecutaChamadaAsync(() => clientApi.GetAsync<ConsultaWebhookResponse>(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks", consulta));
     }
 
     /// <summary>
     /// Cadastrar um webhook para receber notificações de acordo com o tipo de movimento.
     /// Este serviço permite cadastrar uma URL que será notificada sempre que ocorrer um evento associado a um tipo de movimento. O webhook pode ser configurado para o período de movimentação atual (D0).
     /// </summary>
-    /// <param name="webhook">Dados para inclusão do webhook.</param>
+    /// <param name="url">Url a ser chamada com POST. A URL deve ser https.</param>
+    /// <param name="email">E-mail associado ao webhook.</param>
+    /// <param name="codigoTipoMovimento">Código do tipo de movimento do webhook. 7 - Pagamento (Baixa operacional)</param>
+    /// <param name="codigoPeriodoMovimento">Código do período de movimento. 1 - Movimento atual (D0) </param>
     /// <returns></returns>
-    public async Task<IncluirWebhooksResponse?> IncluirWebhook(IncluirWebhookRequest webhook)
-    {
+    public async Task<IncluirWebhooksResponse?> CriarWebHookAsync(string url, string email, int codigoTipoMovimento = 7, int codigoPeriodoMovimento = 1) {
+        IncluirWebhookRequest webhook = new IncluirWebhookRequest()
+        {
+            url = url,
+            email = email,
+            codigoTipoMovimento = codigoTipoMovimento,
+             codigoPeriodoMovimento = codigoPeriodoMovimento
+        };
         return await ExecutaChamadaAsync(() => clientApi.PostAsync<IncluirWebhooksResponse?>(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks", webhook));
     }
 
@@ -251,10 +260,9 @@ public sealed class SicoobCobrancaV3 : Shared.Sicoob
     /// <param name="idWebhook">Identificador único do webhook.</param> 
     /// <param name="webhook">Dados para alteração do webhook.</param>
     /// <returns></returns>     
-    public async Task AlterarWebhook(long idWebhook, AlterarWebhookRequest webhook)
-    {
-        await ExecutaChamadaAsync(() => clientApi.PatchAsync(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks/" + idWebhook, webhook));
-    }
+    public async Task AlterarWebhookAsync(long idWebhook, AlterarWebhookRequest webhook)
+        => await ExecutaChamadaAsync(() => clientApi.PatchAsync(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks/" + idWebhook, webhook));
+    
 
     /// <summary>
     /// Excluir um webhook.
@@ -262,10 +270,8 @@ public sealed class SicoobCobrancaV3 : Shared.Sicoob
     /// </summary>
     /// <param name="idWebhook">Identificador único do webhook.</param>
     /// <returns></returns>
-    public async Task ExcluirWebhook(long idWebhook)
-    {
-        await ExecutaChamadaAsync(() => clientApi.DeleteAsync(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks/" + idWebhook));
-    }
+    public async Task ExcluirWebhookAsync(long idWebhook)
+        => await ExecutaChamadaAsync(() => clientApi.DeleteAsync(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks/" + idWebhook));
 
     /// <summary>
     /// Reativar um webhook inativo.
@@ -273,9 +279,31 @@ public sealed class SicoobCobrancaV3 : Shared.Sicoob
     /// </summary>
     /// <param name="idWebhook">Identificador único do webhook.</param>     
     /// <returns></returns>
-    public async Task ReativarWebhook(long idWebhook)
+    public async Task ReativarWebhookAsync(long idWebhook)
+        => await ExecutaChamadaAsync(() => clientApi.PatchAsync(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks/" + idWebhook + "/reativar", null));
+    
+    /// <summary>
+    /// Consultar solicitações de um webhook.
+    /// Consulta as solicitações de notificação para um webhook com base na data de solicitação informada.
+    /// </summary>
+    /// <param name="idWebhook">Identificador único do webhook.</param>
+    /// <param name="dataSolicitacao">Data da solicitação. Formato: yyyy-MM-dd</param>
+    /// <param name="pagina">Número da página a ser consultada.</param>
+    /// <param name="codigoSolicitacaoSituacao">Código da situação da solicitação do webhook. 2 - Aguardando envio, 3 - Enviado com sucesso e 6 - Erro no envio</param>
+    /// <param name="codigoBarras">Código de barras do boleto presente na notificação webhook</param>
+    /// <param name="nossoNumero">Nosso número do boleto presente na notificação webhook</param>
+    /// <returns>Retorna o histórico das tentativas de notificação, incluindo o status e a resposta da requisição.</returns>
+    public async Task<ConsultaSolicitacoesWebhookResponse> SolicitacoesWebhooks(long idWebhook, DateTime dataSolicitacao, int? pagina = null, int? codigoSolicitacaoSituacao = null, string? codigoBarras = null, int? nossoNumero = null)
     {
-        await ExecutaChamadaAsync(() => clientApi.PatchAsync(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks/" + idWebhook + "/reativar", null));
+        var consulta = new ConsultaSolicitacoesWebhookRequest()
+        {
+            dataSolicitacao = dataSolicitacao,
+            codigoBarras = codigoBarras,
+            nossoNumero = nossoNumero,
+            codigoSolicitacaoSituacao = codigoSolicitacaoSituacao,
+            pagina = pagina
+        };
+        return await ExecutaChamadaAsync(() => clientApi.GetAsync<ConsultaSolicitacoesWebhookResponse>(ConfigApi.UrlApi + "cobranca-bancaria/v3/webhooks/" + idWebhook + "/solicitacoes", consulta));
     }
 
     private void SalvarCopiaMovimentacao(byte[] bytesZip, string nomeArquivo)

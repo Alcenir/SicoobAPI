@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using Newtonsoft.Json;
-using Sicoob.Cobranca.Models.Shared;
 
 namespace Sicoob.Cobranca.Models.v3;
 
@@ -11,7 +8,7 @@ public class AlterarWebhookRequest
     public string email { get; set; }
 }
 
-public class IncluirWebhookRequest : AlterarBoletoRequest
+public class IncluirWebhookRequest : AlterarWebhookRequest
 {
     [JsonProperty(NullValueHandling=NullValueHandling.Ignore)]
     public int codigoTipoMovimento { get; set; }
