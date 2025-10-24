@@ -127,6 +127,28 @@ public sealed class SicoobCobrancaV3 : Shared.Sicoob
     {
         return await ExecutaChamadaAsync(() => clientApi.PostAsync<IncluirBoletosResponse?>(ConfigApi.UrlApi + "cobranca-bancaria/v3/boletos", boleto));
     }
+
+    /// <summary>
+    /// Consulta de dados de faixas de nosso número disponíveis.
+    /// Serviço para consulta de dados de faixas de nosso número disponíveis.
+    /// Quando o campo validaDigitoVerificadorNossoNumero retornar o valor "0" a faixa "numeroInicial" e "numeroFinal" refere-se a numeração final (exemplo: 10 e 15 - utilização: 1-0 1-1 1-2 1-3 1-4 1-5).
+    /// Mas se o campo validaDigitoVerificadorNossoNumero retornar o valor "1" a faixa "numeroInicial" e "numeroFinal" deverá ser calculado o DV (exemplo: 10 e 15 - utilização: 10-4 11-8 12-0 13-1 14-7 15-9).
+    /// </summary>
+    /// <param name="quantidade"></param>
+    /// <param name="modalidade"></param>
+    /// <param name="numeroContratoCobranca"></param>
+    /// <returns></returns>
+    public async Task<ConsultaBoletoResponse?> ConsultarFaixasNossoNumeroDisponivel(int quantidade, int modalidade = (int)Modalidade.SimplesComRegistro, int? numeroContratoCobranca = null)
+    {
+        var consulta = new ConsultaFaixasNossoNumeroRequest()
+        {
+            codigoModalidade = modalidade,
+            numeroCliente = numeroContrato,
+            quantidade = quantidade,
+            numeroContratoCobranca = numeroContratoCobranca
+        };
+        return await ExecutaChamadaAsync(() => clientApi.GetAsync<ConsultaBoletoResponse?>(ConfigApi.UrlApi + "cobranca-bancaria/v3/boletos/faixas-nosso-numero", consulta));
+    }
     
     public async Task BaixarBoletos(int nossoNumero, int codigoModalidade)
     {
@@ -137,22 +159,64 @@ public sealed class SicoobCobrancaV3 : Shared.Sicoob
         };
         await ExecutaChamadaAsync(() => clientApi.PatchAsync(ConfigApi.UrlApi + $"cobranca-bancaria/v3/boletos/{nossoNumero}/baixar", baixa));
     }
+
+    public async Task AlterarBoleto(int nossoNumero, AlterarBoletoRequest boletos)
+    {
+        await ExecutaChamadaAsync(() => clientApi.PatchAsync(ConfigApi.UrlApi + "cobranca-bancaria/v3/boletos/" + nossoNumero, boletos));
+    }
+
+    /* Pagador */
+    public async Task PagadorBoletos(DadosPagadorRequest dadosPagador)
+        => await ExecutaChamadaAsync(() => clientApi.PutAsync(ConfigApi.UrlApi + $"cobranca-bancaria/v3/pagadores", dadosPagador));
+
+    /* Negativação */
+    public async Task NegativarBoletos(int nossoNumero, int codigoModalidade)
+    {
+        var protesto = new ProtestoRequest
+        {
+            numeroCliente = numeroContrato,
+            codigoModalidade = codigoModalidade,
+        };
+        await ExecutaChamadaAsync(() => clientApi.PostAsync(ConfigApi.UrlApi + $"cobranca-bancaria/v3/boletos/{nossoNumero}/negativacoes", protesto));
+    }
     
+    public async Task CancelarNegativacaoBoletos(int nossoNumero, int codigoModalidade)
+    {
+        var protesto = new ProtestoRequest
+        {
+            numeroCliente = numeroContrato,
+            codigoModalidade = codigoModalidade,
+        };
+        await ExecutaChamadaAsync(() => clientApi.PatchAsync(ConfigApi.UrlApi + $"cobranca-bancaria/v3/boletos/{nossoNumero}/negativacoes", protesto));
+    }
+
+    public async Task BaixarNegativacaoBoletos(int nossoNumero)
+     => await ExecutaChamadaAsync(() => clientApi.DeleteAsync(ConfigApi.UrlApi + $"cobranca-bancaria/v3/boletos/{nossoNumero}/negativacoes"));
+
+    /* Protesto */
     public async Task ProtestarBoletos(int nossoNumero, int codigoModalidade)
     {
         var protesto = new ProtestoRequest
         {
             numeroCliente = numeroContrato,
             codigoModalidade = codigoModalidade,
-        };        
+        };
         await ExecutaChamadaAsync(() => clientApi.PostAsync(ConfigApi.UrlApi + $"cobranca-bancaria/v3/boletos/{nossoNumero}/protestos", protesto));
     }
-    
-    public async Task AlterarBoleto(int nossoNumero, AlterarBoletoRequest boletos)
+
+    public async Task CancelarProtestoBoletos(int nossoNumero, int codigoModalidade)
     {
-        await ExecutaChamadaAsync(() => clientApi.PatchAsync(ConfigApi.UrlApi + "cobranca-bancaria/v3/boletos/" + nossoNumero, boletos));
+        var protesto = new ProtestoRequest
+        {
+            numeroCliente = numeroContrato,
+            codigoModalidade = codigoModalidade,
+        };
+        await ExecutaChamadaAsync(() => clientApi.PatchAsync(ConfigApi.UrlApi + $"cobranca-bancaria/v3/boletos/{nossoNumero}/protestos", protesto));
     }
 
+    public async Task DesistirProtestoBoletos(int nossoNumero)
+     => await ExecutaChamadaAsync(() => clientApi.DeleteAsync(ConfigApi.UrlApi + $"cobranca-bancaria/v3/boletos/{nossoNumero}/protestos"));
+     
     /* Movimentação */
     public async Task<RetornoSolicitacaoMovimentacoesCarteira> SolicitarMovimentacao(Tipo tipoMovimento, DateTime data)
     {
@@ -293,7 +357,7 @@ public sealed class SicoobCobrancaV3 : Shared.Sicoob
     /// <param name="codigoBarras">Código de barras do boleto presente na notificação webhook</param>
     /// <param name="nossoNumero">Nosso número do boleto presente na notificação webhook</param>
     /// <returns>Retorna o histórico das tentativas de notificação, incluindo o status e a resposta da requisição.</returns>
-    public async Task<ConsultaSolicitacoesWebhookResponse> SolicitacoesWebhooks(long idWebhook, DateTime dataSolicitacao, int? pagina = null, int? codigoSolicitacaoSituacao = null, string? codigoBarras = null, int? nossoNumero = null)
+    public async Task<ConsultaSolicitacoesWebhookResponse> SolicitacoesWebhooksAsync(long idWebhook, DateTime dataSolicitacao, int? pagina = null, int? codigoSolicitacaoSituacao = null, string? codigoBarras = null, int? nossoNumero = null)
     {
         var consulta = new ConsultaSolicitacoesWebhookRequest()
         {
