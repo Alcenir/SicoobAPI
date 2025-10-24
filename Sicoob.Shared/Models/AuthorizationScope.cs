@@ -227,6 +227,15 @@ public class AuthorizationScope
     public bool COBRANCA_V3_WEBHOOKS_ALTERACAO { get; set; }
 
     /// <summary>
+    /// [API Convênios Pagamentos] convenios_consulta: Permissão de consulta de Api de Convênio de Pagamentos
+    /// </summary>
+    public bool CONVENIO_PAGAMENTOS_CONSULTA { get; set; }
+    /// <summary>
+    /// [API Convênios Pagamentos] convenios_consulta: Permissão de escrita de Api de Convênio de Pagamentos
+    /// </summary>
+    public bool CONVENIO_PAGAMENTOS_ESCRITA { get; set; }
+
+    /// <summary>
     /// Gera a lista de Scope utilizado na geração do Token
     /// </summary>
     public string[] ToScope()
@@ -298,6 +307,10 @@ public class AuthorizationScope
         if (COBRANCA_V3_WEBHOOKS_CONSULTA) lst.Add("webhooks_consulta");
         if (COBRANCA_V3_WEBHOOKS_INCLUSAO) lst.Add("webhooks_inclusao");
         if (COBRANCA_V3_WEBHOOKS_ALTERACAO) lst.Add("webhooks_alteracao");
+
+        /* API Convênios Pagamentos */
+        if (CONVENIO_PAGAMENTOS_CONSULTA) lst.Add("convenios_consulta");
+        if (CONVENIO_PAGAMENTOS_ESCRITA) lst.Add("convenios_escrita");
 
         return lst.ToArray();
     }
@@ -427,6 +440,13 @@ public class AuthorizationScope
         return this;
     }
 
+    public AuthorizationScope Convenio_Setar(bool value)
+    {
+        CONVENIO_PAGAMENTOS_CONSULTA = value;
+        CONVENIO_PAGAMENTOS_ESCRITA = value;
+        return this;
+    }
+
     public AuthorizationScope RemoverTodos()
     {
         return setarTodosComo(false);
@@ -467,8 +487,13 @@ public class AuthorizationScope
     }
     public static AuthorizationScope TodosCobranca(bool v3 = false)
     {
-        if(v3)
+        if (v3)
             return new AuthorizationScope().CobrancaV3_Setar(true);
         return new AuthorizationScope().Cobranca_Setar(true);
+    }
+    
+    public static AuthorizationScope TodosConvenioCobranca()
+    {
+        return new AuthorizationScope().Convenio_Setar(true);
     }
 }
