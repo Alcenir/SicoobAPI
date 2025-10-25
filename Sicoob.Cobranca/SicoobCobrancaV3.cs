@@ -157,7 +157,7 @@ public sealed class SicoobCobrancaV3 : Shared.Sicoob
             numeroCliente = numeroContrato,
             codigoModalidade = codigoModalidade
         };
-        await ExecutaChamadaAsync(() => clientApi.PatchAsync(ConfigApi.UrlApi + $"cobranca-bancaria/v3/boletos/{nossoNumero}/baixar", baixa));
+        await ExecutaChamadaAsync(() => clientApi.PostAsync(ConfigApi.UrlApi + $"cobranca-bancaria/v3/boletos/{nossoNumero}/baixar", baixa));
     }
 
     public async Task AlterarBoleto(int nossoNumero, AlterarBoletoRequest boletos)
@@ -234,7 +234,7 @@ public sealed class SicoobCobrancaV3 : Shared.Sicoob
     public async Task<RetornoConsultaMovimentacoes?> ConsultarSituacaoSolicitacao(int codigoSolicitacao)
     {
         await VerificaAtualizaCredenciaisAsync();
-        var result = await clientApi.GetAsync<ResponseMovimentacao<RetornoConsultaMovimentacoes>>( ConfigApi.UrlApi + "cobranca-bancaria/v3/boletos/solicitacoes/movimentacao", new { numeroCliente = numeroContrato, codigoSolicitacao });
+        var result = await clientApi.GetAsync<ResponseMovimentacao<RetornoConsultaMovimentacoes>>(ConfigApi.UrlApi + "cobranca-bancaria/v3/boletos/movimentacoes", new { numeroCliente = numeroContrato, codigoSolicitacao });
 
         if (result.IsSuccessStatusCode) return result.Data.resultado;
 
@@ -253,9 +253,10 @@ public sealed class SicoobCobrancaV3 : Shared.Sicoob
 
     private async Task<RetornoArquivoMovimentacao> DownloadArquivoMovimentacao(int codigoSolicitacao, int idArquivo)
     {
-        var retorno = await ExecutaChamadaAsync(() => clientApi.GetAsync<ResponseMovimentacao<RetornoArquivoMovimentacao>>(ConfigApi.UrlApi + "/cobranca-bancaria/v3/boletos/movimentacoes/download", new { numeroCliente = numeroContrato, codigoSolicitacao, idArquivo }));
+        var retorno = await ExecutaChamadaAsync(() => clientApi.GetAsync<ResponseMovimentacao<RetornoArquivoMovimentacao>>(ConfigApi.UrlApi + "cobranca-bancaria/v3/boletos/movimentacoes/download", new { numeroCliente = numeroContrato, codigoSolicitacao, idArquivo }));
         return retorno.resultado;
     }
+
     public async Task<MovimentacoesArquivos[]> BaixarMovimentacoes(int codigoSolicitacao, int[] arquivos)
     {
         var lst = new List<MovimentacoesArquivos>();
